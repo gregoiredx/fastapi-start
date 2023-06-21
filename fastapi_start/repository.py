@@ -13,9 +13,6 @@ mapper_registry = registry()
 class User:
     __tablename__ = "user"
 
-    def __init__(self, *args, **kwargs) -> None:
-        ...
-
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
     name: Mapped[str]
 
@@ -25,7 +22,7 @@ class UserRepository:
         self.session = session
 
     def create_user(self, name: str) -> User:
-        user = User(name=name)
+        user = User(name)  # type: ignore[call-arg]
         self.session.add(user)
         self.session.commit()
         return user
