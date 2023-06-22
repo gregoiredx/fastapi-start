@@ -1,28 +1,6 @@
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 from fastapi_start.repository import UserRepository
-from fastapi_start.repository import mapper_registry
-
-engine = create_engine("sqlite://")
-
-Session = sessionmaker(engine)
-
-
-@pytest.fixture(scope="module", autouse=True)
-def _schemas():
-    mapper_registry.metadata.create_all(engine)
-
-
-@pytest.fixture()
-def session():
-    session = Session()
-    try:
-        yield session
-    finally:
-        session.rollback()
-        session.close()
 
 
 @pytest.fixture()

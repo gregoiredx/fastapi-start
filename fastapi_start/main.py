@@ -1,8 +1,10 @@
+from collections.abc import Sequence
+from typing import Annotated
+
 from fastapi import Depends
 from fastapi import FastAPI
-from sqlalchemy.orm import Session
 
-from fastapi_start.database import yield_session
+from fastapi_start.repository import User
 from fastapi_start.repository import UserRepository
 
 app = FastAPI()
@@ -14,10 +16,10 @@ def read_root():
 
 
 @app.post("/users/")
-def create_user(session: Session = Depends(yield_session)):
-    return UserRepository(session).create_user(name="John")
+def create_user(user_repository: Annotated[UserRepository, Depends()]) -> User:
+    return user_repository.create_user(name="John")
 
 
 @app.get("/users/")
-def read_users(session: Session = Depends(yield_session)):
-    return UserRepository(session).get_users()
+def read_users(user_repository: Annotated[UserRepository, Depends()]) -> Sequence[User]:
+    return user_repository.get_users()

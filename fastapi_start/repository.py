@@ -2,9 +2,10 @@ from collections.abc import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import Session
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import registry
+
+from fastapi_start.database import Repository
 
 mapper_registry = registry()
 
@@ -17,14 +18,11 @@ class User:
     name: Mapped[str]
 
 
-class UserRepository:
-    def __init__(self, session: Session):
-        self.session = session
-
+class UserRepository(Repository):
     def create_user(self, name: str) -> User:
         user = User(name)  # type: ignore[call-arg]
         self.session.add(user)
-        self.session.commit()
+        self.session.flush((user,))
         return user
 
     def get_users(self) -> Sequence[User]:

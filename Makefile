@@ -15,3 +15,6 @@ alembic-upgrade:
 
 alembic-autogenerate: alembic-upgrade
 	poetry run alembic revision --autogenerate
+
+coverage:
+	poetry run pytest --cov=fastapi_start --cov-report html --cov-report term tests/
