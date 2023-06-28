@@ -11,4 +11,5 @@ def _schemas():
 
 @pytest.fixture()
 def session():
-    yield from in_test_database.yield_auto_rollback_session()
+    with in_test_database.yield_auto_rollback_session() as session:
+        yield session

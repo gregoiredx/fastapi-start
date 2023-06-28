@@ -9,9 +9,11 @@ from fastapi_start.main import app
 from tests.in_test_database import yield_auto_rollback_session
 
 
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(autouse=True)
 def _auto_rollback_session():
-    main.app.dependency_overrides[yield_session] = yield_auto_rollback_session
+    with yield_auto_rollback_session() as session:
+        main.app.dependency_overrides[yield_session] = lambda: session
+        yield
 
 
 @pytest.fixture(scope="module")
@@ -37,3 +39,16 @@ def test_create_user(client):
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"id": 1, "name": "John"}
+
+    response = client.get("/users")
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == [{"id": 1, "name": "John"}]
+
+
+def test_create_and_get_user(client):
+    client.post("/users")
+    response = client.get("/users")
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == [{"id": 1, "name": "John"}]

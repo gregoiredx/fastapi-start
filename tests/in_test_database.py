@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from contextlib import contextmanager
 
 from sqlalchemy import StaticPool
 from sqlalchemy import create_engine
@@ -16,6 +17,7 @@ engine = create_engine(
 _Session = sessionmaker(engine)
 
 
+@contextmanager
 def yield_auto_rollback_session() -> Generator[Session, None, None]:
     session = _Session()
     try:
