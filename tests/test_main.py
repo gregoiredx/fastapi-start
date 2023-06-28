@@ -3,21 +3,9 @@ from http import HTTPStatus
 import pytest
 from fastapi.testclient import TestClient
 
-from fastapi_start import main
-from fastapi_start.database import yield_session
-from fastapi_start.main import app
-from tests.in_test_database import yield_auto_rollback_session
-
-
-@pytest.fixture(autouse=True)
-def _auto_rollback_session():
-    with yield_auto_rollback_session() as session:
-        main.app.dependency_overrides[yield_session] = lambda: session
-        yield
-
 
 @pytest.fixture(scope="module")
-def client():
+def client(app):
     return TestClient(app)
 
 
