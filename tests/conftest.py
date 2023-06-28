@@ -1,4 +1,5 @@
 import pytest
+from starlette.testclient import TestClient
 
 from fastapi_start import main
 from fastapi_start.database import yield_session
@@ -23,8 +24,12 @@ def app():
 
 
 @pytest.fixture(autouse=True)
-def _auto_rollback_session(app):
-    with in_test_database.yield_auto_rollback_session() as session:
-        app.dependency_overrides[yield_session] = lambda: session
-        yield
-        del app.dependency_overrides[yield_session]
+def app_session(app, session):
+    app.dependency_overrides[yield_session] = lambda: session
+    yield session
+    del app.dependency_overrides[yield_session]
+
+
+@pytest.fixture(scope="module")
+def client(app):
+    return TestClient(app)

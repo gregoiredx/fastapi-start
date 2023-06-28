@@ -16,8 +16,10 @@ def read_root():
 
 
 @app.post("/users/")
-def create_user(user_repository: Annotated[UserRepository, Depends()]) -> User:
-    return user_repository.create_user(name="John")
+def create_user(
+    user_repository: Annotated[UserRepository, Depends()], name: str
+) -> User:
+    return user_repository.create_user(name=name)
 
 
 @app.get("/users/")
