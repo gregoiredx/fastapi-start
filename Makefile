@@ -11,7 +11,7 @@ alembic-autogenerate-poetry: alembic-upgrade-poetry
 	poetry run alembic revision --autogenerate
 
 up-poetry: alembic-upgrade-poetry
-	poetry run uvicorn fastapi_start.main:app --reload
+	poetry run uvicorn fastapi_start.web:app --reload
 
 up-docker:
 	docker-compose up --build

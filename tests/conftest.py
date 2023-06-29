@@ -1,7 +1,7 @@
 import pytest
 from starlette.testclient import TestClient
 
-from fastapi_start import main
+from fastapi_start import web
 from fastapi_start.database import yield_session
 from fastapi_start.repository import mapper_registry
 from tests import in_test_database
@@ -20,7 +20,7 @@ def session():
 
 @pytest.fixture(scope="session")
 def app():
-    return main.app
+    return web.app
 
 
 @pytest.fixture(autouse=True)

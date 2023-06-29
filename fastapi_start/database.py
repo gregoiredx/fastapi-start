@@ -26,5 +26,5 @@ def yield_session(settings: Annotated[Settings, Depends(get_settings)]):
 
 
 class Repository:
-    def __init__(self, session: Session = Depends(yield_session)):
+    def __init__(self, session: Annotated[Session, Depends(yield_session)]):
         self.session = session

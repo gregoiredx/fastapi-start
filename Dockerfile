@@ -16,7 +16,7 @@ WORKDIR /app
 COPY --chown=unprivileged:unprivileged fastapi_start fastapi_start
 
 FROM app as web
-CMD ["uvicorn", "fastapi_start.main:app", "--host", "0.0.0.0"]
+CMD ["uvicorn", "fastapi_start.web:app", "--host", "0.0.0.0"]
 
 FROM app as alembic
 COPY --chown=unprivileged:unprivileged alembic.ini alembic.ini
