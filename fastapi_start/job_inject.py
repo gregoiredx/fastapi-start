@@ -1,7 +1,7 @@
+import functools
 from collections.abc import Callable
 from contextlib import ExitStack
 from contextlib import contextmanager
-from functools import partial
 from inspect import Parameter
 from typing import Any
 
@@ -11,6 +11,7 @@ from fastapi.dependencies.utils import is_gen_callable
 
 
 def inject(call):
+    @functools.wraps(call)
     def enriched_call():
         with ExitStack() as exit_stack:
             return sub_inject(call, exit_stack)()
@@ -19,7 +20,7 @@ def inject(call):
 
 
 def sub_inject(call, exit_stack: ExitStack):
-    return partial(
+    return functools.partial(
         call,
         **{
             param.name: _resolve_dependency(dependency, exit_stack)
