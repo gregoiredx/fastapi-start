@@ -11,6 +11,32 @@ from fastapi.routing import run_endpoint_function
 from starlette.requests import Request
 
 
+def job(func: Callable[..., Any]) -> Callable[..., Any]:
+    """
+    Can be used as a decorator for a top level function to be run in a FastAPI like
+    context.
+    Especially usefull to resolve fastapi.Depends parameters and to run async functions
+    seamlessly as FastApi endpoints are.
+
+    Exemple usage:
+
+    @job
+    async def main(normal_param, service: Annotated[Service, Depends()]):
+        ...
+
+    if __name__ == "__main__":
+        main(normal_param="a value")
+    """
+
+    @functools.wraps(func)
+    def executor(**kwargs: dict[str, Any]) -> Any:
+        loop = asyncio.get_event_loop()
+        resolved_func = inject(func)
+        loop.run_until_complete(resolved_func(**kwargs))
+
+    return executor
+
+
 def inject(func: Callable[..., Any]) -> Callable[..., Any]:
     @functools.wraps(func)
     async def resolved_func(**kwargs: dict[str, Any]) -> Any:
