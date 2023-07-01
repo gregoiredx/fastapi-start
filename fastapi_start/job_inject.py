@@ -14,16 +14,25 @@ def inject(func: Callable[..., Any]) -> Callable[..., Any]:
     @functools.wraps(func)
     def resolved_func(*args: Any, **kwargs: dict[str, Any]) -> Any:
         with ExitStack() as exit_stack:
-            return _call(_inject(func, exit_stack), exit_stack, *args, **kwargs)
+            return _inject_and_call(exit_stack, func, *args, **kwargs)
 
     return resolved_func
+
+
+def _inject_and_call(
+    exit_stack: ExitStack,
+    func: Callable[..., Any],
+    *args: Any,
+    **kwargs: dict[str, Any],
+) -> Any:
+    return _call(_inject(func, exit_stack), exit_stack, *args, **kwargs)
 
 
 def _inject(func: Callable[..., Any], exit_stack: ExitStack) -> Callable[..., Any]:
     return functools.partial(
         func,
         **{
-            param.name: _call(_inject(dependency, exit_stack), exit_stack)
+            param.name: _inject_and_call(exit_stack, dependency)
             for param in get_typed_signature(func).parameters.values()
             if (dependency := _get_param_dependency(param))
         },
