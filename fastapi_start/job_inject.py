@@ -25,31 +25,15 @@ def _inject_and_call(
     *args: Any,
     **kwargs: dict[str, Any],
 ) -> Any:
-    return _call(_inject(func, exit_stack), exit_stack, *args, **kwargs)
-
-
-def _inject(func: Callable[..., Any], exit_stack: ExitStack) -> Callable[..., Any]:
-    return functools.partial(
-        func,
-        **{
-            param.name: _inject_and_call(exit_stack, dependency)
-            for param in get_typed_signature(func).parameters.values()
-            if (dependency := _get_param_dependency(param))
-        },
-    )
-
-
-def _call(
-    func: Callable[..., Any],
-    exit_stack: ExitStack,
-    *args: Any,
-    **kwargs: dict[str, Any],
-) -> Any:
-    return (
-        exit_stack.enter_context(contextmanager(func)(*args, **kwargs))
-        if is_gen_callable(func)
-        else func(*args, **kwargs)
-    )
+    resolved_depends_params = {
+        param.name: _inject_and_call(exit_stack, dependency)
+        for param in get_typed_signature(func).parameters.values()
+        if (dependency := _get_param_dependency(param))
+    }
+    resolved_func = functools.partial(func, **resolved_depends_params)
+    if is_gen_callable(resolved_func):
+        return exit_stack.enter_context(contextmanager(resolved_func)(*args, **kwargs))
+    return resolved_func(*args, **kwargs)
 
 
 def _get_param_dependency(param: Parameter) -> Callable[..., Any] | None:
