@@ -12,9 +12,9 @@ from fastapi.dependencies.utils import is_gen_callable
 
 def inject(func):
     @functools.wraps(func)
-    def resolved_func():
+    def resolved_func(*args, **kwargs):
         with ExitStack() as exit_stack:
-            return sub_inject(func, exit_stack)()
+            return sub_inject(func, exit_stack)(*args, **kwargs)
 
     return resolved_func
 

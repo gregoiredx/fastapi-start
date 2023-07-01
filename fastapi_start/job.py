@@ -13,12 +13,15 @@ logger = logging.getLogger(__name__)
 
 @inject
 def main(
+    normal_param,
     settings: Annotated[Settings, Depends(get_settings)],
     user_repository: Annotated[UserRepository, Depends()],
 ):
-    logger.error(f"Hello from job {settings.db_url} {user_repository.get_users()}")
+    logger.error(
+        f"Hello from job {normal_param} {settings.db_url} {user_repository.get_users()}"
+    )
     user_repository.create_user("John Job")
 
 
 if __name__ == "__main__":
-    main()
+    main(normal_param="normal param")
