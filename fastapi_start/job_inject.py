@@ -1,6 +1,9 @@
+from collections.abc import Callable
 from contextlib import ExitStack
 from contextlib import contextmanager
 from functools import partial
+from inspect import Parameter
+from typing import Any
 
 from fastapi.dependencies.utils import analyze_param
 from fastapi.dependencies.utils import get_typed_signature
@@ -16,21 +19,29 @@ def inject(call):
 
 
 def sub_inject(call, exit_stack: ExitStack):
-    endpoint_signature = get_typed_signature(call)
-    signature_params = endpoint_signature.parameters
-    injected_params = {}
-    for param_name, param in signature_params.items():
-        type_annotation, depends, param_field = analyze_param(
-            param_name=param_name,
-            annotation=param.annotation,
-            value=param.default,
-            is_path_param=False,
+    return partial(
+        call,
+        **{
+            param.name: _resolve_dependency(dependency, exit_stack)
+            for param in get_typed_signature(call).parameters.values()
+            if (dependency := _get_param_dependency(param))
+        },
+    )
+
+
+def _get_param_dependency(param: Parameter) -> Callable[..., Any] | None:
+    _, depends, _ = analyze_param(
+        param_name=param.name,
+        annotation=param.annotation,
+        value=param.default,
+        is_path_param=False,
+    )
+    return depends.dependency if depends else None
+
+
+def _resolve_dependency(dependency: Callable[..., Any], exit_stack: ExitStack) -> Any:
+    if is_gen_callable(dependency):
+        return exit_stack.enter_context(
+            contextmanager(sub_inject(dependency, exit_stack))()
         )
-        if depends and (dependency := depends.dependency):
-            if is_gen_callable(dependency):
-                injected_params[param_name] = exit_stack.enter_context(
-                    contextmanager(sub_inject(dependency, exit_stack))()
-                )
-            else:
-                injected_params[param_name] = sub_inject(dependency, exit_stack)()
-    return partial(call, **injected_params)
+    return sub_inject(dependency, exit_stack)()
