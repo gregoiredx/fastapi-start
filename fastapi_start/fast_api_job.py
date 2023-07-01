@@ -10,6 +10,8 @@ from fastapi.dependencies.utils import solve_dependencies
 from fastapi.routing import run_endpoint_function
 from starlette.requests import Request
 
+DEPENDENCY_OVERRIDES: Any = None
+
 
 def job(func: Callable[..., Any]) -> Callable[..., Any]:
     """
@@ -51,7 +53,9 @@ async def _solve_and_run(
 ) -> Any:
     dependant = get_dependant(path="", call=func)
     solved_result = await solve_dependencies(
-        request=cast(Request, _JobRequest(exit_stack, kwargs)), dependant=dependant
+        request=cast(Request, _JobRequest(exit_stack, kwargs)),
+        dependant=dependant,
+        dependency_overrides_provider=DependencyOverrideProvider(DEPENDENCY_OVERRIDES),
     )
     values, errors, background_tasks, sub_response, _ = solved_result
     return await run_endpoint_function(
@@ -71,3 +75,8 @@ class _JobRequest:
         self.path_params: dict[str, Any] = {}
         self.headers: dict[str, Any] = {}
         self.cookies: dict[str, Any] = {}
+
+
+class DependencyOverrideProvider:
+    def __init__(self, overrides: Any):
+        self.dependency_overrides = overrides
