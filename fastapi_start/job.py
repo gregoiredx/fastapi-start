@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Annotated
 
@@ -23,5 +24,10 @@ def main(
     user_repository.create_user("John Job")
 
 
+async def start(*args, **kwargs):
+    await main(*args, **kwargs)
+
+
 if __name__ == "__main__":
-    main(normal_param="normal param")
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(start(normal_param="normal param"))

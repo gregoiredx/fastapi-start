@@ -1,46 +1,47 @@
+import asyncio
 import functools
 from collections.abc import Callable
-from contextlib import ExitStack
-from contextlib import contextmanager
-from inspect import Parameter
+from contextlib import AsyncExitStack
 from typing import Any
+from typing import cast
 
-from fastapi.dependencies.utils import analyze_param
-from fastapi.dependencies.utils import get_typed_signature
-from fastapi.dependencies.utils import is_gen_callable
+from fastapi.dependencies.utils import get_dependant
+from fastapi.dependencies.utils import solve_dependencies
+from fastapi.routing import run_endpoint_function
+from starlette.requests import Request
 
 
 def inject(func: Callable[..., Any]) -> Callable[..., Any]:
     @functools.wraps(func)
-    def resolved_func(*args: Any, **kwargs: dict[str, Any]) -> Any:
-        with ExitStack() as exit_stack:
-            return _inject_and_call(exit_stack, func, *args, **kwargs)
+    async def resolved_func(**kwargs: dict[str, Any]) -> Any:
+        async with AsyncExitStack() as exit_stack:
+            return await _inject_and_call(exit_stack, func, **kwargs)
 
     return resolved_func
 
 
-def _inject_and_call(
-    exit_stack: ExitStack,
-    func: Callable[..., Any],
-    *args: Any,
-    **kwargs: dict[str, Any],
+class JobRequest:
+    def __init__(self, exit_stack: AsyncExitStack, params):
+        self.scope = {
+            "type": "job",
+            "fastapi_astack": exit_stack,
+        }
+        self.query_params = params
+        self.path_params: dict[str, Any] = {}
+        self.headers: dict[str, Any] = {}
+        self.cookies: dict[str, Any] = {}
+
+
+async def _inject_and_call(
+    exit_stack: AsyncExitStack, func: Callable[..., Any], **kwargs: dict[str, Any]
 ) -> Any:
-    resolved_depends_params = {
-        param.name: _inject_and_call(exit_stack, dependency)
-        for param in get_typed_signature(func).parameters.values()
-        if (dependency := _get_param_dependency(param))
-    }
-    resolved_func = functools.partial(func, **resolved_depends_params)
-    if is_gen_callable(resolved_func):
-        return exit_stack.enter_context(contextmanager(resolved_func)(*args, **kwargs))
-    return resolved_func(*args, **kwargs)
-
-
-def _get_param_dependency(param: Parameter) -> Callable[..., Any] | None:
-    _, depends, _ = analyze_param(
-        param_name=param.name,
-        annotation=param.annotation,
-        value=param.default,
-        is_path_param=False,
+    dependant = get_dependant(path="", call=func)
+    solved_result = await solve_dependencies(
+        request=cast(Request, JobRequest(exit_stack, kwargs)), dependant=dependant
     )
-    return depends.dependency if depends else None
+    values, errors, background_tasks, sub_response, _ = solved_result
+    return await run_endpoint_function(
+        dependant=dependant,
+        values=values,
+        is_coroutine=(asyncio.iscoroutinefunction(dependant.call)),
+    )
