@@ -57,7 +57,7 @@ async def _solve_and_run(
     return await run_endpoint_function(
         dependant=dependant,
         values=values,
-        is_coroutine=(asyncio.iscoroutinefunction(dependant.call)),
+        is_coroutine=asyncio.iscoroutinefunction(dependant.call),
     )
 
 
