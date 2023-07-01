@@ -10,7 +10,7 @@ from fastapi.dependencies.utils import solve_dependencies
 from fastapi.routing import run_endpoint_function
 from starlette.requests import Request
 
-DEPENDENCY_OVERRIDES: Any = None
+DEPENDENCY_OVERRIDES: Any = {}
 
 
 def job(func: Callable[..., Any]) -> Callable[..., Any]:

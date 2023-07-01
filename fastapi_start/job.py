@@ -12,16 +12,16 @@ logger = logging.getLogger(__name__)
 
 
 @job
-async def main(
-    normal_param,
+async def create_user(
+    name,
     settings: Annotated[Settings, Depends(get_settings)],
     user_repository: Annotated[UserRepository, Depends()],
 ):
     logger.error(
-        f"Hello from job {normal_param} {settings.db_url} {user_repository.get_users()}"
+        f"Hello from job {name} {settings.db_url} {user_repository.get_users()}"
     )
-    user_repository.create_user("John Job")
+    user_repository.create_user(name)
 
 
 if __name__ == "__main__":
-    main(normal_param="normal param")
+    create_user(name="John Job")
