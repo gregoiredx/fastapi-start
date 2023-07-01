@@ -43,6 +43,6 @@ def _get_param_dependency(param: Parameter) -> Callable[..., Any] | None:
 def _resolve_dependency(dependency: Callable[..., Any], exit_stack: ExitStack) -> Any:
     if is_gen_callable(dependency):
         return exit_stack.enter_context(
-            sub_inject(contextmanager(dependency), exit_stack)()
+            contextmanager(sub_inject(dependency, exit_stack))()
         )
     return sub_inject(dependency, exit_stack)()
