@@ -10,21 +10,21 @@ from fastapi.dependencies.utils import get_typed_signature
 from fastapi.dependencies.utils import is_gen_callable
 
 
-def inject(call):
-    @functools.wraps(call)
-    def enriched_call():
+def inject(func):
+    @functools.wraps(func)
+    def resolved_func():
         with ExitStack() as exit_stack:
-            return sub_inject(call, exit_stack)()
+            return sub_inject(func, exit_stack)()
 
-    return enriched_call
+    return resolved_func
 
 
-def sub_inject(call, exit_stack: ExitStack):
+def sub_inject(func: Callable[..., Any], exit_stack: ExitStack) -> Callable[..., Any]:
     return functools.partial(
-        call,
+        func,
         **{
             param.name: _resolve_dependency(dependency, exit_stack)
-            for param in get_typed_signature(call).parameters.values()
+            for param in get_typed_signature(func).parameters.values()
             if (dependency := _get_param_dependency(param))
         },
     )
