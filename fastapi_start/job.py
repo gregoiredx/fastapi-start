@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @inject
-def main(
+async def main(
     normal_param,
     settings: Annotated[Settings, Depends(get_settings)],
     user_repository: Annotated[UserRepository, Depends()],
@@ -24,10 +24,6 @@ def main(
     user_repository.create_user("John Job")
 
 
-async def start(*args, **kwargs):
-    await main(*args, **kwargs)
-
-
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(start(normal_param="normal param"))
+    loop.run_until_complete(main(normal_param="normal param"))
