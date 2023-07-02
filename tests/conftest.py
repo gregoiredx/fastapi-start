@@ -1,7 +1,7 @@
 import pytest
 from starlette.testclient import TestClient
 
-from fastapi_start import fast_api_job
+from fastapi_start import job
 from fastapi_start import web
 from fastapi_start.database import yield_session
 from fastapi_start.repository import mapper_registry
@@ -20,24 +20,29 @@ def session():
 
 
 @pytest.fixture(scope="session")
-def app():
+def web_app():
     return web.app
 
 
 @pytest.fixture(autouse=True)
-def app_session(app, session):
-    app.dependency_overrides[yield_session] = lambda: session
+def app_session(web_app, session):
+    web_app.dependency_overrides[yield_session] = lambda: session
     yield session
-    del app.dependency_overrides[yield_session]
+    del web_app.dependency_overrides[yield_session]
+
+
+@pytest.fixture(scope="session")
+def job_app():
+    return job.app
 
 
 @pytest.fixture(autouse=True)
-def job_session(session):
-    fast_api_job.DEPENDENCY_OVERRIDES[yield_session] = lambda: session
+def job_session(job_app, session):
+    job_app.dependency_overrides[yield_session] = lambda: session
     yield session
-    del fast_api_job.DEPENDENCY_OVERRIDES[yield_session]
+    del job_app.dependency_overrides[yield_session]
 
 
 @pytest.fixture(scope="module")
-def client(app):
-    return TestClient(app)
+def client(web_app):
+    return TestClient(web_app)
